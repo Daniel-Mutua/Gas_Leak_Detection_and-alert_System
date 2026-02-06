@@ -1,1 +1,69 @@
+#include <Wire.h>
+#include <LiquidCrystal_I2C.h>
 
+#define GAS_SENSOR A0
+#define BUZZER     D5
+
+int threshold = 400;   // Adjust after calibration
+
+LiquidCrystal_I2C lcd(0x27, 16, 2);
+
+void setup() {
+  Serial.begin(115200);
+  delay(100);
+
+  pinMode(BUZZER, OUTPUT);
+  digitalWrite(BUZZER, LOW);
+
+  lcd.init();
+  lcd.backlight();
+
+  Serial.println("=== GAS LEAK DETECTION SYSTEM ===");
+  Serial.println("Warming up MQ-2 sensor...");
+
+  lcd.setCursor(0, 0);
+  lcd.print("Gas Monitor");
+  lcd.setCursor(0, 1);
+  lcd.print("Warming up...");
+
+  delay(20000);  // MQ-2 warm-up
+
+  lcd.clear();
+  Serial.println("System Ready");
+}
+
+void loop() {
+  int gasValue = analogRead(GAS_SENSOR);
+
+  // ----- SERIAL OUTPUT -----
+  Serial.print("Gas Value: ");
+  Serial.print(gasValue);
+  Serial.print(" | Threshold: ");
+  Serial.print(threshold);
+
+  if (gasValue > threshold) {
+    Serial.println(" | Status: GAS DETECTED!");
+    digitalWrite(BUZZER, HIGH);
+
+    lcd.setCursor(0, 0);
+    lcd.print("Gas Level: ");
+    lcd.print(gasValue);
+    lcd.print("   ");
+
+    lcd.setCursor(0, 1);
+    lcd.print("!! GAS ALERT !!");
+  } else {
+    Serial.println(" | Status: SAFE");
+    digitalWrite(BUZZER, LOW);
+
+    lcd.setCursor(0, 0);
+    lcd.print("Gas Level: ");
+    lcd.print(gasValue);
+    lcd.print("   ");
+
+    lcd.setCursor(0, 1);
+    lcd.print("Status: SAFE   ");
+  }
+
+  delay(500);
+}
